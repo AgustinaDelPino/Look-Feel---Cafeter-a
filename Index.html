@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Look & Feel | LAB</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #E5E0D8; border-radius: 20px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        // Opciones de configuración
+        const FONDOS = [
+            { id: 'original', label: 'Mantener original', prompt: 'mantén estrictamente el entorno y fondo de la imagen original sin alterarlo' },
+            { id: 'estudio_blanco', label: 'Estudio Blanco', prompt: 'fondo infinito de estudio fotográfico completamente blanco y limpio' },
+            { id: 'cafeteria', label: 'Cafetería acogedora', prompt: 'fondo de una cafetería acogedora con ligero desenfoque' },
+            { id: 'madera_rustica', label: 'Mesa de madera rústica', prompt: 'sobre una mesa de madera rústica con textura natural' },
+            { id: 'marmol', label: 'Mármol elegante', prompt: 'sobre una elegante mesada de mármol de alta calidad' },
+            { id: 'terraza', label: 'Terraza al aire libre', prompt: 'en una terraza al aire libre con luz diurna' },
+        ];
+
+        const ILUMINACION = [
+            { id: 'original', label: 'Mantener original', prompt: 'mantén la iluminación exacta de la imagen original' },
+            { id: 'natural', label: 'Luz natural de ventana', prompt: 'iluminación natural suave entrando por una ventana, sombras difusas' },
+            { id: 'calida', label: 'Luz cálida y acogedora', prompt: 'iluminación cálida de cafetería (3200K), ambiente acogedor e íntimo' },
+            { id: 'estudio', label: 'Iluminación de estudio', prompt: 'iluminación profesional de estudio fotográfico, luces precisas y controladas' },
+            { id: 'contraste', label: 'Alto contraste', prompt: 'iluminación dramática de alto contraste, sombras marcadas y luces brillantes' },
+            { id: 'suave', label: 'Luz suave', prompt: 'iluminación muy suave, difuminada, sin sombras duras' },
+            { id: 'nocturno', label: 'Estilo nocturno', prompt: 'iluminación de estilo nocturno, luz tenue y misteriosa' },
+        ];
+
+        const ESTILOS = [
+            { id: 'original', label: 'Mantener original', prompt: 'mantén el estilo visual y tratamiento de color original' },
+            { id: 'minimalista', label: 'Minimalista', prompt: 'estilo visual minimalista, limpio, con mucho espacio negativo' },
+            { id: 'artesanal', label: 'Artesanal', prompt: 'estilo visual artesanal, orgánico, destacando texturas rústicas y naturales' },
+            { id: 'premium', label: 'Premium / elegante', prompt: 'estilo visual premium, lujoso, elegante y altamente sofisticado' },
+            { id: 'vintage', label: 'Vintage', prompt: 'estilo visual retro vintage, colores ligeramente desaturados' },
+            { id: 'moderno', label: 'Moderno', prompt: 'estilo visual moderno, contemporáneo, líneas limpias y colores definidos' },
+            { id: 'publicitario', label: 'Publicitario', prompt: 'estilo comercial publicitario, colores vibrantes, alto contraste e impacto' },
+        ];
+
+        const FORMATOS = [
+            { id: 'ig_cuadrada', label: 'Publicación IG Cuadrada (1:1)', ratio: '1:1' },
+            { id: 'ig_vertical', label: 'Publicación IG Vertical (4:5)', ratio: '3:4' },
+            { id: 'historias', label: 'Historia de Instagram (9:16)', ratio: '9:16' },
+            { id: 'tiktok', label: 'Portada Reel / TikTok (9:16)', ratio: '9:16' },
+            { id: 'web', label: 'Banner página web (16:9)', ratio: '16:9' },
+            { id: 'promo', label: 'Banner promocional (3:1)', ratio: '16:9' },
+        ];
+
+        const PERSPECTIVAS = [
+            { id: 'sup', label: 'Perspectiva Superior', prompt: 'ángulo ligeramente desde arriba (ligeramente picado), mostrando parte de la superficie superior del producto' },
+            { id: 'izq', label: 'Lateral Izquierda', prompt: 'ángulo de cámara desde el lado izquierdo del producto' },
+            { id: 'der', label: 'Lateral Derecha', prompt: 'ángulo de cámara desde el lado derecho del producto' }
+        ];
+
+        const IconCoffee = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-[#A89481]"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>;
+        const IconWand2 = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>;
+        const IconSlidersHorizontal = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>;
+        const IconImageIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
+        const IconX = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const IconUploadCloud = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>;
+        const IconLayoutGrid = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>;
+        const IconFlaskConical = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>;
+        const IconDownload = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
+        const IconRefreshCw = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>;
+        const IconChevronLeft = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6"/></svg>;
+        const IconChevronRight = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>;
+        const IconChevronUp = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m18 15-6-6-6 6"/></svg>;
+        const IconChevronDown = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>;
+        const IconCheck = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>;
+
+        function App() {
+            const [fondo, setFondo] = useState(FONDOS[0]);
+            const [luz, setLuz] = useState(ILUMINACION[0]);
+            const [estilo, setEstilo] = useState(ESTILOS[0]);
+            const [formato, setFormato] = useState(FORMATOS[0]);
+            const [customPrompt, setCustomPrompt] = useState('');
+            
+            const [accordions, setAccordions] = useState({
+                fondo: false,
+                luz: false,
+                estilo: false,
+                formato: false
+            });
+            
+            const [sourceImage, setSourceImage] = useState(null);
+            const [sourceImageBase64, setSourceImageBase64] = useState(null);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [generationStatus, setGenerationStatus] = useState('');
+            const [generatedImages, setGeneratedImages] = useState([]);
+            const [error, setError] = useState(null);
+            const [lightboxIndex, setLightboxIndex] = useState(-1);
+
+            const fileInputRef = useRef(null);
+
+            const toggleAccordion = (key) => {
+                setAccordions(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
+                    processFile(file);
+                } else if (file) {
+                    setError("Por favor sube un archivo JPG o PNG válido.");
+                }
+            };
+
+            const processFile = (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    setSourceImage(e.target.result);
+                    const base64Data = e.target.result.split(',')[1];
+                    setSourceImageBase64(base64Data);
+                    setError(null);
+                    setGeneratedImages([]); 
+                };
+                reader.readAsDataURL(file);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp')) {
+                    processFile(file);
+                }
+            };
+
+            const loadTestImage = () => {
+                const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="#f5f5dc"/><path d="M150 100 L250 100 L230 300 L170 300 Z" fill="#6f4e37"/><rect x="140" y="80" width="120" height="20" fill="#ffffff" rx="5"/><text x="200" y="200" font-family="sans-serif" font-size="20" fill="#ffffff" text-anchor="middle">CAFÉ</text><circle cx="300" cy="250" r="40" fill="#d2b48c" /><text x="300" y="255" font-family="sans-serif" font-size="12" fill="#fff" text-anchor="middle">TAZA</text></svg>`;
+                const encodedData = btoa(unescape(encodeURIComponent(svgStr)));
+                const dataUrl = `data:image/svg+xml;base64,${encodedData}`;
+                setSourceImage(dataUrl);
+                setSourceImageBase64(encodedData);
+                setGeneratedImages([]);
+                setError(null);
+            };
+
+            const generateProfessionalImages = async () => {
+                if (!sourceImageBase64) {
+                    setError("Por favor, sube una imagen primero.");
+                    return;
+                }
+
+                setIsGenerating(true);
+                setError(null);
+                setGeneratedImages([]); 
+
+                const apiKey = ""; // API Key
+                const imageApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+                const visionApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                try {
+                    setGenerationStatus('Analizando imagen para detectar productos...');
+                    
+                    let detectedProducts = [];
+                    try {
+                        const visionPayload = {
+                            contents: [{
+                                role: "user",
+                                parts: [
+                                    { text: "Analiza esta fotografía. Enumera los objetos o productos físicos principales (ej: taza de café, bolsa de café, pastel). Devuelve EXCLUSIVAMENTE un array de strings en formato JSON. Máximo 4 elementos." },
+                                    {
+                                        inlineData: {
+                                            mimeType: sourceImage.startsWith('data:image/svg') ? "image/svg+xml" : "image/jpeg",
+                                            data: sourceImageBase64
+                                        }
+                                    }
+                                ]
+                            }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
+                        };
+
+                        const visionResponse = await fetch(visionApiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(visionPayload)
+                        });
+                        
+                        if (visionResponse.ok) {
+                            const visionResult = await visionResponse.json();
+                            const textResponse = visionResult?.candidates?.[0]?.content?.parts?.[0]?.text;
+                            if (textResponse) {
+                                detectedProducts = JSON.parse(textResponse);
+                                if (!Array.isArray(detectedProducts)) detectedProducts = [];
+                            }
+                        }
+                    } catch (visionErr) {
+                        console.warn("Error detectando productos individuales.", visionErr);
+                    }
+
+                    setGenerationStatus('Generando perspectivas y aislando productos...');
+
+                    const fetchImage = async (perspectivaLabel, perspectivaPrompt, objetivoAislar = null, type = 'main') => {
+                        let promptText = "";
+                        
+                        const fondoInstruccion = fondo.id === 'original' 
+                            ? "ENTORNO: Mantén estrictamente el entorno y fondo de la imagen original sin alterarlo." 
+                            : `ENTORNO: ${fondo.prompt}.`;
+                            
+                        const luzInstruccion = luz.id === 'original'
+                            ? "ILUMINACIÓN: Mantén la iluminación exacta de la imagen original."
+                            : `ILUMINACIÓN: ${luz.prompt}.`;
+                            
+                        const estiloInstruccion = estilo.id === 'original'
+                            ? "ESTILO VISUAL: Mantén el estilo fotográfico original."
+                            : `ESTILO VISUAL: ${estilo.prompt}.`;
+
+                        if (objetivoAislar) {
+                            promptText = `
+                                ACTÚA COMO UN FOTÓGRAFO DE PRODUCTO PROFESIONAL.
+                                TAREA: Extraer y fotografiar individualmente un producto específico de la imagen original.
+                                
+                                REGLA CRÍTICA DE AISLAMIENTO: La imagen original puede contener múltiples elementos. DEBES ENFOCARTE ÚNICA Y EXCLUSIVAMENTE EN EL SIGUIENTE ELEMENTO: "${objetivoAislar}". 
+                                Elimina visualmente cualquier otro producto, persona o elemento principal que no sea "${objetivoAislar}".
+                                Mantén los colores, materiales, logos y esencia de "${objetivoAislar}".
+                                
+                                ${fondoInstruccion}
+                                ${luzInstruccion}
+                                ${estiloInstruccion}
+                                
+                                PERSPECTIVA: ${perspectivaPrompt}.
+                                
+                                INSTRUCCIONES ADICIONALES: ${customPrompt ? customPrompt : 'Estética premium, nítida y apta para un e-commerce de alta gama.'}
+                            `;
+                        } else {
+                            promptText = `
+                                ACTÚA COMO UN FOTÓGRAFO DE PRODUCTO PROFESIONAL.
+                                TAREA: Re-imagina y renderiza la imagen proporcionada de la escena o producto principal.
+                                
+                                REGLA CRÍTICA 1: DEBES MANTENER EXACTAMENTE EL MISMO PRODUCTO O COMPOSICIÓN. Mismos colores, mismos materiales, mismos textos/logos, mismas proporciones físicas. No alteres la esencia del objeto.
+                                
+                                ${fondoInstruccion}
+                                ${luzInstruccion}
+                                ${estiloInstruccion}
+                                
+                                PERSPECTIVA DE CÁMARA OBLIGATORIA PARA ESTA IMAGEN: ${perspectivaPrompt}.
+                                
+                                INSTRUCCIONES ADICIONALES DEL CLIENTE: ${customPrompt ? customPrompt : 'Mantén una estética premium, nítida y apta para un e-commerce.'}
+                                
+                                RESULTADO ESPERADO: Una fotografía hiperrealista de catálogo de 8k, respetando el producto original pero mejorando su presentación en el entorno solicitado y desde el ángulo exacto pedido.
+                            `;
+                        }
+
+                        const payload = {
+                            contents: [{
+                                role: "user",
+                                parts: [
+                                    { text: promptText },
+                                    {
+                                        inlineData: {
+                                            mimeType: sourceImage.startsWith('data:image/svg') ? "image/svg+xml" : "image/jpeg",
+                                            data: sourceImageBase64
+                                        }
+                                    }
+                                ]
+                            }],
+                            generationConfig: {
+                                responseModalities: ['IMAGE'],
+                                imageConfig: { aspectRatio: formato.ratio }
+                            }
+                        };
+
+                        const response = await fetch(imageApiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error(`Error en la API para perspectiva ${perspectivaLabel}`);
+
+                        const result = await response.json();
+                        const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+                        
+                        if (part) {
+                            return {
+                                perspectiveName: perspectivaLabel,
+                                url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`,
+                                mimeType: part.inlineData.mimeType,
+                                type: type
+                            };
+                        } else {
+                            throw new Error("Formato de respuesta inesperado");
+                        }
+                    };
+
+                    const promises = [];
+                    
+                    PERSPECTIVAS.forEach(perspectiva => {
+                        promises.push(fetchImage(perspectiva.label, perspectiva.prompt, null, 'main'));
+                    });
+
+                    if (detectedProducts.length > 0) {
+                        detectedProducts.forEach(prod => {
+                            promises.push(fetchImage(
+                                `Aislado: ${prod}`, 
+                                "toma frontal clara y centrada, mostrando el producto de frente perfectamente aislado", 
+                                prod,
+                                'isolated'
+                            ));
+                        });
+                    }
+
+                    const results = await Promise.all(promises);
+                    setGeneratedImages(results);
+                    setGenerationStatus('');
+
+                } catch (err) {
+                    console.error(err);
+                    setError("Hubo un error al generar las imágenes. Por favor intenta nuevamente.");
+                    setGenerationStatus('');
+                } finally {
+                    setIsGenerating(false);
+                }
+            };
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (lightboxIndex === -1) return;
+                    if (e.key === 'ArrowLeft') {
+                        setLightboxIndex((prev) => (prev > 0 ? prev - 1 : generatedImages.length - 1));
+                    } else if (e.key === 'ArrowRight') {
+                        setLightboxIndex((prev) => (prev < generatedImages.length - 1 ? prev + 1 : 0));
+                    } else if (e.key === 'Escape') {
+                        setLightboxIndex(-1);
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [lightboxIndex, generatedImages.length]);
+
+            const handleDownload = (imageUrl, filename) => {
+                const a = document.createElement('a');
+                a.href = imageUrl;
+                a.download = `Look&Feel_${filename.replace(/\s+/g, '_')}_${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            const handleReset = () => {
+                setSourceImage(null);
+                setSourceImageBase64(null);
+                setGeneratedImages([]);
+                setError(null);
+                setCustomPrompt('');
+                setGenerationStatus('');
+                setFondo(FONDOS[0]);
+                setLuz(ILUMINACION[0]);
+                setEstilo(ESTILOS[0]);
+                setFormato(FORMATOS[0]);
+                setAccordions({ fondo: false, luz: false, estilo: false, formato: false });
+            };
+
+            const AccordionSection = ({ title, isOpen, onToggle, children }) => (
+                <div className="border-b border-[#E5E0D8] last:border-0 bg-white">
+                    <button 
+                        onClick={onToggle}
+                        className="w-full flex justify-between items-center py-2 px-3 text-[11px] font-bold text-[#4A4036] uppercase tracking-wider hover:text-[#A89481] transition-colors"
+                    >
+                        {title}
+                        {isOpen ? <IconChevronUp className="w-3 h-3" /> : <IconChevronDown className="w-3 h-3" />}
+                    </button>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out bg-[#FDFCFB] ${isOpen ? 'max-h-[600px] opacity-100 pb-2' : 'max-h-0 opacity-0'}`}>
+                        {children}
+                    </div>
+                </div>
+            );
+
+            const SelectionPills = ({ options, selected, onChange }) => (
+                <div className="grid grid-cols-1 gap-1 px-3 pt-1 max-h-48 overflow-y-auto custom-scrollbar">
+                    {options.map((opt) => (
+                        <button
+                            key={opt.id}
+                            onClick={() => onChange(opt)}
+                            className={`
+                                relative px-2.5 py-1.5 text-[11px] text-left rounded-md transition-all duration-200 border flex items-center
+                                ${selected.id === opt.id 
+                                    ? 'bg-[#EFE9E1] border-[#C8B6A6] text-[#4A4036] shadow-sm font-semibold' 
+                                    : 'bg-white border-[#E5E0D8] text-[#78716C] hover:bg-[#FAF8F5] hover:border-[#C8B6A6]'
+                                }
+                            `}
+                        >
+                            {selected.id === opt.id && <IconCheck className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#A89481]" />}
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-[#FAF8F5] text-[#4A4036] font-sans selection:bg-[#EFE9E1]">
+                    
+                    <header className="bg-white border-b border-[#E5E0D8] px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <IconCoffee />
+                                <h1 className="text-xl font-bold tracking-tight text-[#292524]">
+                                    LOOK & FEEL <span className="font-light text-[#A89481]">| LAB</span>
+                                </h1>
+                            </div>
+                            <p className="text-[10px] text-[#78716C] mt-1 uppercase tracking-widest font-semibold">
+                                Potencia el catálogo de tu cafetería
+                            </p>
+                        </div>
+                        <button 
+                            onClick={loadTestImage}
+                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider bg-[#F5F2EB] text-[#78716C] border border-[#E5E0D8] rounded-md hover:bg-[#EFE9E1] transition-colors"
+                        >
+                            <IconWand2 className="w-3.5 h-3.5" />
+                            Test OC4500161705
+                        </button>
+                    </header>
+
+                    <main className="max-w-[1400px] mx-auto p-8">
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12 items-start">
+                            
+                            <section className="lg:col-span-4 flex flex-col">
+                                <h2 className="text-[11px] font-bold text-[#78716C] mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                    <IconSlidersHorizontal className="w-3.5 h-3.5 text-[#A89481]" />
+                                    Ajustes de Revelado
+                                </h2>
+                                
+                                <div className="bg-white border border-[#E5E0D8] rounded-xl overflow-hidden shadow-sm flex-grow flex flex-col justify-between">
+                                    <div className="flex flex-col">
+                                        <AccordionSection title="Entorno / Fondo" isOpen={accordions.fondo} onToggle={() => toggleAccordion('fondo')}>
+                                            <SelectionPills options={FONDOS} selected={fondo} onChange={setFondo} />
+                                        </AccordionSection>
+
+                                        <AccordionSection title="Iluminación" isOpen={accordions.luz} onToggle={() => toggleAccordion('luz')}>
+                                            <SelectionPills options={ILUMINACION} selected={luz} onChange={setLuz} />
+                                        </AccordionSection>
+                                        
+                                        <AccordionSection title="Estilo Visual" isOpen={accordions.estilo} onToggle={() => toggleAccordion('estilo')}>
+                                            <SelectionPills options={ESTILOS} selected={estilo} onChange={setEstilo} />
+                                        </AccordionSection>
+
+                                        <AccordionSection title="Formato de Salida" isOpen={accordions.formato} onToggle={() => toggleAccordion('formato')}>
+                                            <SelectionPills options={FORMATOS} selected={formato} onChange={setFormato} />
+                                        </AccordionSection>
+
+                                        <div className="p-3 bg-[#FDFCFB] border-t border-[#E5E0D8]">
+                                            <div className="w-full flex justify-between items-center mb-2 text-xs font-bold text-[#4A4036] uppercase tracking-wider">
+                                                Pídele a la IA (Opcional)
+                                            </div>
+                                            <textarea 
+                                                className="w-full bg-white border border-[#E5E0D8] text-xs p-3 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#C8B6A6] focus:border-transparent transition-all resize-none placeholder-[#A8A29D] text-[#4A4036] shadow-inner"
+                                                rows="3"
+                                                placeholder="Ej: Agregar una taza de café desenfocada al fondo..."
+                                                value={customPrompt}
+                                                onChange={(e) => setCustomPrompt(e.target.value)}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 border-t border-[#E5E0D8] bg-white">
+                                        <button 
+                                            onClick={generateProfessionalImages}
+                                            disabled={isGenerating || !sourceImage}
+                                            className={`
+                                                w-full py-3 rounded-lg font-bold uppercase tracking-widest text-[10px] flex justify-center items-center gap-2 transition-all duration-300
+                                                ${(!sourceImage || isGenerating) 
+                                                    ? 'bg-[#E5E0D8] text-[#A8A29D] cursor-not-allowed' 
+                                                    : 'bg-[#A89481] hover:bg-[#8F7D6D] text-white shadow-sm transform hover:-translate-y-0.5 border border-[#8F7D6D]'
+                                                }
+                                            `}
+                                        >
+                                            {isGenerating ? (
+                                                <>
+                                                    <svg className="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    {generationStatus || 'Procesando...'}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <IconWand2 className="w-4 h-4" />
+                                                    Generar imagen
+                                                </>
+                                            )}
+                                        </button>
+                                        {error && <p className="text-red-500 text-[10px] text-center mt-2 font-medium">{error}</p>}
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="lg:col-span-8 flex flex-col sticky top-24 z-0">
+                                <h2 className="text-[11px] font-bold text-[#78716C] mb-2 flex items-center gap-2 uppercase tracking-widest">
+                                    <IconImageIcon className="w-3.5 h-3.5 text-[#A89481]" />
+                                    Imagen de Origen
+                                </h2>
+                                
+                                <div 
+                                    className={`
+                                        bg-white rounded-xl shadow-sm flex flex-col items-center justify-center p-6 transition-all duration-300
+                                        border-2 border-dashed
+                                        ${sourceImage ? 'border-[#E5E0D8]' : 'border-[#D6D3D1] hover:border-[#A89481] hover:bg-[#FDFBF9] cursor-pointer'}
+                                    `}
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={handleDrop}
+                                    onClick={() => !sourceImage && fileInputRef.current.click()}
+                                    style={{ height: '500px' }} 
+                                >
+                                    {sourceImage ? (
+                                        <div className="relative w-full h-full flex items-center justify-center bg-[#FAF8F5] rounded-lg border border-[#E5E0D8] p-4">
+                                            <img src={sourceImage} alt="Origen" className="max-h-full max-w-full object-contain rounded shadow-sm" />
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleReset(); }}
+                                                className="absolute top-2 right-2 bg-white/90 text-[#78716C] hover:text-red-500 hover:bg-white p-2 rounded-full shadow-md transition-colors backdrop-blur-sm border border-[#E5E0D8]"
+                                                title="Eliminar imagen"
+                                            >
+                                                <IconX className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <div className="bg-[#FAF8F5] p-4 rounded-full inline-block mb-3 border border-[#E5E0D8]">
+                                                <IconUploadCloud className="w-6 h-6 text-[#A89481]" />
+                                            </div>
+                                            <h3 className="text-sm font-bold text-[#4A4036] mb-1">Importar fotografía</h3>
+                                            <p className="text-[#8C7D70] text-xs max-w-sm mx-auto mb-6">
+                                                Arrastra tu archivo aquí o haz clic para explorar tu dispositivo (JPG, PNG).
+                                            </p>
+                                            <span className="px-6 py-2 bg-[#A89481] text-white rounded-md text-[11px] tracking-wider font-bold hover:bg-[#8F7D6D] transition-colors shadow-sm uppercase">
+                                                Examinar
+                                            </span>
+                                        </div>
+                                    )}
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        className="hidden" 
+                                        accept="image/jpeg, image/png, image/webp" 
+                                        onChange={handleFileChange} 
+                                    />
+                                </div>
+                            </section>
+                        </div>
+
+                        <section className="pt-8 border-t-2 border-[#E5E0D8]">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xs font-bold text-[#78716C] flex items-center gap-2 uppercase tracking-widest">
+                                    <IconLayoutGrid className="w-4 h-4 text-[#A89481]" />
+                                    Borrador de Imágenes
+                                </h2>
+                            </div>
+
+                            {generatedImages.length === 0 ? (
+                                <div className="bg-[#EFE9E1]/30 border border-[#E5E0D8] rounded-xl p-12 text-center text-[#A8A29D] font-medium text-sm flex flex-col items-center justify-center min-h-[200px]">
+                                    <IconFlaskConical className="w-8 h-8 mb-3 opacity-20" />
+                                    Las imágenes renderizadas aparecerán aquí.
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-10">
+                                    <div>
+                                        <h3 className="text-[11px] font-bold text-[#4A4036] mb-4 uppercase tracking-widest border-b border-[#E5E0D8] pb-2">
+                                            Perspectivas Principales de la Escena
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                            {generatedImages.filter(img => img.type === 'main').map((img, idx) => (
+                                                <div key={`main-${idx}`} className="flex flex-col gap-2 group bg-white p-2.5 rounded-xl border border-[#E5E0D8] shadow-sm">
+                                                    <div 
+                                                        className="relative bg-[#FAF8F5] rounded-lg overflow-hidden aspect-square border border-[#E5E0D8] cursor-pointer"
+                                                        onClick={() => setLightboxIndex(generatedImages.indexOf(img))}
+                                                    >
+                                                        <img src={img.url} alt={`Resultado ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                                                            <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-[#4A4036] text-[9px] uppercase tracking-wider font-bold px-3 py-1.5 rounded shadow-sm backdrop-blur-sm transition-opacity duration-300 border border-[#E5E0D8]">
+                                                                Ampliar
+                                                            </span>
+                                                        </div>
+                                                        <div className="absolute top-1.5 left-1.5 bg-white/95 backdrop-blur-sm text-[8px] uppercase tracking-widest font-bold px-2 py-1 rounded text-[#78716C] shadow-sm border border-[#E5E0D8]">
+                                                            {img.perspectiveName}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        <button 
+                                                            onClick={() => handleDownload(img.url, img.perspectiveName)}
+                                                            className="flex items-center justify-center gap-1 bg-[#FAF8F5] hover:bg-[#EFE9E1] text-[#4A4036] text-[9px] uppercase tracking-wider font-bold py-2 rounded-md transition-colors border border-[#E5E0D8]"
+                                                        >
+                                                            <IconDownload className="w-3 h-3 text-[#A89481]" /> Original
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDownload(img.url, img.perspectiveName + '_max')}
+                                                            className="flex items-center justify-center gap-1 bg-[#FAF8F5] hover:bg-[#EFE9E1] text-[#4A4036] text-[9px] uppercase tracking-wider font-bold py-2 rounded-md transition-colors border border-[#E5E0D8]"
+                                                        >
+                                                            <IconDownload className="w-3 h-3 text-[#A89481]" /> Máxima
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {generatedImages.filter(img => img.type === 'isolated').length > 0 && (
+                                        <div>
+                                            <h3 className="text-[11px] font-bold text-[#4A4036] mb-4 uppercase tracking-widest border-b border-[#E5E0D8] pb-2 flex items-center gap-2">
+                                                <IconWand2 className="w-3.5 h-3.5 text-[#A89481]" />
+                                                Tomas Individuales (Aislados)
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                {generatedImages.filter(img => img.type === 'isolated').map((img, idx) => (
+                                                    <div key={`iso-${idx}`} className="flex flex-col gap-2 group bg-white p-2.5 rounded-xl border border-[#E5E0D8] shadow-sm">
+                                                        <div 
+                                                            className="relative bg-[#FAF8F5] rounded-lg overflow-hidden aspect-square border border-[#E5E0D8] cursor-pointer"
+                                                            onClick={() => setLightboxIndex(generatedImages.indexOf(img))}
+                                                        >
+                                                            <img src={img.url} alt={`Resultado ${idx}`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                                                                <span className="opacity-0 group-hover:opacity-100 bg-white/95 text-[#4A4036] text-[9px] uppercase tracking-wider font-bold px-3 py-1.5 rounded shadow-sm backdrop-blur-sm transition-opacity duration-300 border border-[#E5E0D8]">
+                                                                    Ampliar
+                                                                </span>
+                                                            </div>
+                                                            <div className="absolute top-1.5 left-1.5 bg-white/95 backdrop-blur-sm text-[8px] uppercase tracking-widest font-bold px-2 py-1 rounded text-[#78716C] shadow-sm border border-[#E5E0D8] max-w-[90%] truncate">
+                                                                {img.perspectiveName}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <button 
+                                                            onClick={() => handleDownload(img.url, img.perspectiveName)}
+                                                            className="flex items-center justify-center gap-1 bg-[#FAF8F5] hover:bg-[#EFE9E1] text-[#4A4036] text-[9px] uppercase tracking-wider font-bold py-2 rounded-md transition-colors border border-[#E5E0D8] w-full"
+                                                        >
+                                                            <IconDownload className="w-3 h-3 text-[#A89481]" /> Descargar
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-6 flex justify-center border-t border-[#E5E0D8] pt-8 pb-4">
+                                        <button 
+                                            onClick={handleReset} 
+                                            className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#A89481] text-[#4A4036] hover:bg-[#FAF8F5] hover:shadow-sm rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all transform hover:-translate-y-0.5"
+                                        >
+                                            <IconRefreshCw className="w-3.5 h-3.5 text-[#A89481]" /> 
+                                            Volver a cargar otra imagen
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </section>
+                    </main>
+
+                    {lightboxIndex !== -1 && generatedImages.length > 0 && (
+                        <div className="fixed inset-0 z-50 bg-[#292524]/90 backdrop-blur-sm flex items-center justify-center p-4">
+                            <button 
+                                className="absolute left-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors hidden md:block"
+                                onClick={() => setLightboxIndex((prev) => (prev > 0 ? prev - 1 : generatedImages.length - 1))}
+                            >
+                                <IconChevronLeft className="w-6 h-6" />
+                            </button>
+                            
+                            <div className="relative w-full max-w-4xl px-12 max-h-[90vh] flex flex-col items-center">
+                                <div className="bg-white p-2 rounded-lg shadow-2xl">
+                                    <img 
+                                        src={generatedImages[lightboxIndex].url} 
+                                        alt="Vista ampliada" 
+                                        className="max-w-full max-h-[75vh] object-contain rounded"
+                                    />
+                                </div>
+                                <div className="mt-6 flex flex-col items-center gap-4">
+                                    <span className="text-white/80 font-bold text-xs tracking-widest uppercase">
+                                        {generatedImages[lightboxIndex].perspectiveName} • {formato.label}
+                                    </span>
+                                    <div className="flex gap-3">
+                                        <button 
+                                            onClick={() => handleDownload(generatedImages[lightboxIndex].url, generatedImages[lightboxIndex].perspectiveName)}
+                                            className="flex items-center gap-1.5 px-6 py-2.5 bg-[#A89481] hover:bg-[#8F7D6D] text-white rounded-md text-[10px] tracking-wider uppercase font-bold shadow-md transition-all hover:-translate-y-0.5"
+                                        >
+                                            <IconDownload className="w-3.5 h-3.5" /> Descargar 
+                                        </button>
+                                        <button 
+                                            onClick={() => setLightboxIndex(-1)}
+                                            className="flex items-center gap-1.5 px-6 py-2.5 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-md text-[10px] tracking-wider uppercase font-bold transition-all"
+                                        >
+                                            Cerrar Vista
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button 
+                                className="absolute right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors hidden md:block"
+                                onClick={() => setLightboxIndex((prev) => (prev < generatedImages.length - 1 ? prev + 1 : 0))}
+                            >
+                                <IconChevronRight className="w-6 h-6" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
